@@ -1,0 +1,192 @@
+---
+title: "Problem Set 2 "
+author: Louie Anderson
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+
+
+library(knitr)
+
+# As long as you are working in a Rstudio Project file, you shouldn't need to 'hard code' directories like this 
+# change to your own working directory
+#knitr::opts_knit$set(root.dir = 'C:/Users/doosti/Desktop/MGSC_310')
+
+# set seed to your own favorite number
+set.seed(310)
+options(width=70)
+# if you want to prevent scientific format for numbers use this:
+
+options(scipen=99)
+
+# general rchunk code options
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=FALSE, size = "vsmall")
+opts_chunk$set(message = FALSE,
+               warning = FALSE,
+               cache = TRUE,
+               autodep = TRUE,
+               cache.comments = FALSE,
+               collapse = TRUE,
+               fig.width = 5,  
+               fig.height = 4,
+               fig.align='center')
+
+```
+
+```{r setup_2}
+
+# load all your libraries here
+library('tidyverse')
+library('forcats')
+library('rsample')
+library('caret')
+# note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+
+```
+
+
+## Question 1
+
+1a) Response to part a
+```{r}
+
+movies <- read_csv("datasets/IMDB_movies.csv")
+
+movies_clean <- 
+  movies %>% 
+  mutate(budgetM = budget/1000000,
+         grossM = gross/1000000,
+         profitM = grossM - budgetM,
+         ROI = profitM/budgetM,
+         genre_main = as.factor(unlist(map(strsplit(as.character(movies$genres),"\\|"),1))) %>% fct_lump(12),
+         rating_simple = fct_lump(content_rating, n = 6)
+         ) %>%
+  filter(budget < 400000000, 
+         content_rating != "", 
+         content_rating != "Not Rated",
+         language == "English") %>% 
+  mutate(rating_simple = rating_simple %>% fct_drop()) %>% 
+  rename(director = director_name, 
+         title = movie_title,
+         year = title_year) %>% 
+  select(-c(actor_1_name, actor_2_name,actor_1_facebook_likes, actor_2_facebook_likes, 
+         budget, gross, aspect_ratio, num_voted_users,num_user_for_reviews)) %>% 
+  relocate(title, year, country, director, budgetM, grossM, profitM, ROI, imdb_score, genre_main, rating_simple, language, duration)
+
+
+```
+
+1b) Response to part b
+
+```{r}
+
+#setting seed
+set.seed(310)
+         
+#Creating a tts with an .8 to .2 train/test
+movies_split <- initial_split(movies_clean, prop = .80)
+
+movies_train <- training(movies_split)
+movies_test <- testing(movies_split)
+
+```
+
+
+1c) Response to part c. 
+
+```{r}
+#Linear Regression model building
+model1 <- lm(grossM ~ imdb_score + budgetM + relevel(rating_simple, ref = "R"), data = movies_train)
+
+
+summary(model1)
+
+```
+
+
+1d) Response to part d 
+
+
+```{r}
+
+# Holding imdb_score constant, spending more money on movies seem to have a net positive return on movie gross. This is illustrated by the positive coefficient value for budgetM, which translates to a 15.6 million increase in gross per 1 unit, or 1 million dollar, invested in budgeting. A higher budget will lead to higher gross for a movie.
+
+```
+
+
+
+1e) Response to part e 
+
+
+```{r}
+
+# When a movie is G rated, appropriate for all ages, the gross of a movie is increased by 33.8 million dollars. The nature of G rating is categorical, which does not lead to any type of incrementing. Rather, if a movie is G rating, it will have an increase of 33.8 million dollars in gross. Any other rating, it will increase by that respective rating, while the coefficient for rating G will be 0.
+
+```
+
+
+1f) Response to part f. 
+
+
+```{r}
+
+# The p-value associated with imdb_score is .0000000000000002 or 2e-16.A p-value can be defined as the probability, or significance, that a variable is related to the output. With relation to imdb_score and grossM, the p-value for imdb_score indicates that there is a relationship with grossM. This is because the smaller the p-value, the more significant a variable is, usually under .05.
+
+```
+
+
+1g) Response to part g 
+
+
+```{r}
+
+#Prediction of model training set
+preds_train <-  predict(model1)
+preds_train
+
+
+#prediction of model testing set
+preds_test <- predict(model1, newdata = movies_test)
+preds_test
+
+```
+
+1h) Response to part h 
+
+
+```{r}
+
+# creating a new dataframe
+pred_col <- c(preds_test)
+actual_col <- c(movies_test$grossM)
+
+pred_actual <- data.frame(pred_col, actual_col)
+head(pred_actual)
+
+#ggplotting (https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2) for adjusting plot title
+ggplot(pred_actual, aes(x = pred_col, y = actual_col)) + geom_point(alpha = .3) + theme_bw() + theme(panel.border = element_blank()) + xlab("Predicted Gross Values") + ylab("Actual Gross Values") + ggtitle("Actual vs Predicted Gross in Millions") + theme(plot.title = element_text(hjust = 0.5)) + geom_smooth (method = lm, se = FALSE)
+
+```
+
+
+1i) Response to part i 
+
+
+```{r}
+# Calculated RMSE for both train and test set
+train <- RMSE(preds_train, movies_train$grossM)
+test <- RMSE(pred_actual$pred_col, pred_actual$actual_col)
+
+TrainRMSE <- c(train)
+TestRMSE <- c(test)
+
+DataFrame<- data.frame(TrainRMSE, TestRMSE)
+head(DataFrame)
+
+#Based on the RMSE measurements, the model is not overfit. RMSE is the measure of fit, or the measure of how well the model is in predicting the true values. A smaller number means better fir or better predictions; 0 means an absolutely perfect fit. Overfitting means that the model should have a much smaller RMSE score in the training set than the testing set. Since this is not the case, both scores are about the same, the model is not overfit.
+```
+
