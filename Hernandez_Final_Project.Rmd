@@ -56,7 +56,7 @@ view(CostClean)
 library('rsample')
 library(caret)
 set.seed(765)
-CostClean_split <- initial_split(CostClean)
+CostClean_split <- initial_split(CostClean, 0.8)
 CostClean_train <- training(CostClean_split)
 CostClean_test <- testing(CostClean_split)
 
@@ -68,9 +68,65 @@ predict_train <- predict(model1, newdata = CostClean_train)
 predict_test <- predict(model1, newdata = CostClean_test)
 
 RMSE(pred = predict_train, CostClean_train$cost)
-# [1] 26.0863
+# [1] 26.27025
 RMSE(pred = predict_test, CostClean_test$cost)
-# [1] 27.44519
+# [1] 26.93851
+```
+
+```{r}
+library('tidyverse')
+library('rsample')
+library('glmnet')
+library('glmnetUtils')
+library('forcats')
+# lasso Model
+lasso_mod <- cv.glmnet(cost ~ .,
+                       data = CostClean_train,
+                       # note alpha = 1 sets Lasso!  
+                       alpha = 1)
+summary(lasso_mod)
+
+print(lasso_mod$lambda.min)
+#
+print(lasso_mod$lambda.1se)
+
+coef(lasso_mod, s = lasso_mod$lambda.min) %>% 
+  round(3)
+
+lasso_coefs <- data.frame(
+  lasso_min = coef(lasso_mod, s = lasso_mod$lambda.min) %>% 
+    round(3) %>% as.matrix() ,
+  lasso_1se = coef(lasso_mod, s = lasso_mod$lambda.1se) %>% 
+    round(3) %>% as.matrix() 
+) %>% rename(lasso_min = 1, lasso_1se = 2)
+
+print(lasso_coefs)
+summary(lasso_coefs)
+library('coefplot')
+
+coefpath(lasso_mod)
+
+lasso_coefs %>% 
+  select(lasso_min) %>% 
+  filter(lasso_min != 0) %>% 
+  nrow()
+
+# for lambda.1se
+lasso_coefs %>% 
+  select(lasso_1se) %>% 
+  filter(lasso_1se != 0) %>% 
+  nrow()
+
+predict_train_lasso <- predict(lasso_mod, s=lasso_mod$lambda.min, CostClean_train)
+predict_test_lasso <- predict(lasso_mod, s=lasso_mod$lambda.min, CostClean_test)
+
+print(predict_train_lasso)
+print(predict_test_lasso)
+
+RMSE(pred = predict_train_lasso, CostClean_train$cost)
+# [1] 26.45705
+RMSE(pred = predict_test_lasso, CostClean_test$cost)
+# [1] 26.84907
 ```
 
 ```{r}
@@ -91,62 +147,7 @@ predicted_test <- predict(tree_mod, newdata = CostClean_test)
 
 # Finding the error on each set
 RMSE(pred = predicted_train, CostClean_train$cost)
-# [1] 22.06844
+# [1] 21.52555
 RMSE(pred = predicted_test, CostClean_test$cost)
-# [1] 22.56861
+# [1] 22.22936
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
