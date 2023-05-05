@@ -68,7 +68,9 @@ predict_train <- predict(model1, newdata = CostClean_train)
 predict_test <- predict(model1, newdata = CostClean_test)
 
 RMSE(pred = predict_train, CostClean_train$cost)
+# [1] 26.0863
 RMSE(pred = predict_test, CostClean_test$cost)
+# [1] 27.44519
 ```
 
 ```{r}
@@ -89,7 +91,9 @@ predicted_test <- predict(tree_mod, newdata = CostClean_test)
 
 # Finding the error on each set
 RMSE(pred = predicted_train, CostClean_train$cost)
+# [1] 22.06844
 RMSE(pred = predicted_test, CostClean_test$cost)
+# [1] 22.56861
 ```
 
 
