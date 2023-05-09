@@ -3,7 +3,8 @@ if you want to shar code, please upload rmd file here
 *The kaggle data set is uploaded here; you can download the file here insted*
 * project code is to be done in Rmarkdon*
 
-*Here is the new clean data set. It doesn;t remove all of the NA's, but it removes most of it*
+*The new clean data set is in my updated r file, it is the first chunk*
+
 CostC <- Cost[-sample(1:nrow(Cost), 55428), ]
 CostClean<- CostC %>% mutate(food_category = fct_lump_min(food_category,125),
                              food_department= fct_lump_min(food_department,175),
