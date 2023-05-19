@@ -38,3 +38,7 @@ CostClean<- CostClean %>% mutate(food_category = as.factor(food_category),
                                  media_type = as.factor(media_type),
                                  avg..yearly_income = as.factor(avg..yearly_income))
 CostClean<- CostClean[,-30:-38]
+
+
+This is may help with the interpretation fo the coefficients
+Both dependent/response variable and independent/predictor variable(s) are log-transformed. Interpret the coefficient as the percent increase in the dependent variable for every 1% increase in the independent variable. Example: the coefficient is 0.198. For every 1% increase in the independent variable, our dependent variable increases by about 0.20%. For x percent increase, calculate 1.x to the power of the coefficient, subtract 1, and multiply by 100. Example: For every 20% increase in the independent variable, our dependent variable increases by about (1.20 0.198 – 1) * 100 = 3.7 percent. (https://data.library.virginia.edu/interpreting-log-transformations-in-a-linear-model/#:~:text=Interpret%20the%20coefficient%20as%20the,variable%20increases%20by%20about%200.20%25.)
